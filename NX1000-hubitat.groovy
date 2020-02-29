@@ -1,20 +1,20 @@
 /**
  *  Nexia NX1000 One Touch Controller
  *
- * 
+ *
  *  This driver implements the NX1000 as a button controller.  It has been built on the great
  *  work of other.  I am humbled by their talent, and priviledged to use portions of thier work.
- * 
- *  I did find out an intered=sting thing about the display capabilities of the NX1000.  
+ *
+ *  I did find out an intered=sting thing about the display capabilities of the NX1000.
  *  Things can get a bit freaky with regards to where labels wind up displayed on the device
- *  if the labels are too long.   With this in mind I have limited the label sent to the 
- *  controller to 12 characters each.  It is nearly impossible to see 12 characters anyway, 
+ *  if the labels are too long.   With this in mind I have limited the label sent to the
+ *  controller to 12 characters each.  It is nearly impossible to see 12 characters anyway,
  *  because the NX1000 does not appear to scroll long labels.
- * 
- *  Thank you to Mike Maxwell for his example of Hubitat's button implentation.  
+ *
+ *  Thank you to Mike Maxwell for his example of Hubitat's button implentation.
  *  You will see his work used here to provide the button functionality.
  *
- *  Thank you to DarwinsDen for the code that puts the labels on the buttons.  
+ *  Thank you to DarwinsDen for the code that puts the labels on the buttons.
  *  His work was built to make the NX1000 work on Smartthings. I have adapted it to work here.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
@@ -25,34 +25,35 @@
  *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
- *  
- *  
- *  
+ *
+ *
+ *
  *  Changelog:
- *  
- *  1.0 (07 Jan 2020) - Initial release  
- *  1.1 (07 Jan 2020) - Added "Enable Debug Logging" control to all log.debug commands. 
+ *
+ *  1.0 (07 Jan 2020) - Initial release
+ *  1.1 (07 Jan 2020) - Added "Enable Debug Logging" control to all log.debug commands.
  *                      Removed some debug commands that were commented out.
  *  1.2 (09 Jan 2020) - Removed the button specific commands.  They were not fully implemented.
  *			Removed the Double Tap command.  The controller doesn't provide a double tap capability.
  *			Corrected the trim lengh of labels to a maximum of 12 characters.  It had been 14.
- *  
- *  
+ *  2.0 (29 Feb 2020) - Forked from Wayne Pirtle by Wayne Bevan
+ *
+ *
 */
 
  metadata {
-  
-  definition (name: "Nexia NX1000 One Touch Controller", namespace: "odwp", author: "Wayne Pirtle") {
+
+  definition (name: "Nexia NX1000 One Touch Controller", namespace: "bevan", author: "Wayne Bevan") {
         capability "PushableButton"
         capability "HoldableButton"
         capability "ReleasableButton"
         capability "Configuration"
-      
+
         command "push", ["NUMBER"]
         command "hold", ["NUMBER"]
         command "release", ["NUMBER"]
-      
-      
+
+
         fingerprint deviceId: "0x1801", inClusters: "0x5E, 0x85, 0x59, 0x80, 0x5B, 0x70, 0x5A, 0x7A, 0x72, 0x8F, 0x73, 0x2D, 0x93, 0x92, 0x86, 0x84"
   }
 
@@ -61,28 +62,28 @@
   preferences {
 
         input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
-      
-  	    input "buttonLabel1",  "string", title: "Button 1 Label",  defaultValue: "Button 1",  displayDuringSetup: true, required: false	
-        input "buttonLabel2",  "string", title: "Button 2 Label",  defaultValue: "Button 2",  displayDuringSetup: true, required: false	
-        input "buttonLabel3",  "string", title: "Button 3 Label",  defaultValue: "Button 3",  displayDuringSetup: true, required: false	
-        input "buttonLabel4",  "string", title: "Button 4 Label",  defaultValue: "Button 4",  displayDuringSetup: true, required: false	
-        input "buttonLabel5",  "string", title: "Button 5 Label",  defaultValue: "Button 5",  displayDuringSetup: true, required: false	
-		input "buttonLabel6",  "string", title: "Button 6 Label",  defaultValue: "Button 6",  displayDuringSetup: true, required: false	
-        input "buttonLabel7",  "string", title: "Button 7 Label",  defaultValue: "Button 7",  displayDuringSetup: true, required: false	
-        input "buttonLabel8",  "string", title: "Button 8 Label",  defaultValue: "Button 8",  displayDuringSetup: true, required: false	
-        input "buttonLabel9",  "string", title: "Button 9 Label",  defaultValue: "Button 9",  displayDuringSetup: true, required: false	
-        input "buttonLabel10", "string", title: "Button 10 Label", defaultValue: "Button 10", displayDuringSetup: true, required: false	
-		input "buttonLabel11", "string", title: "Button 11 Label", defaultValue: "Button 11", displayDuringSetup: true, required: false	
-        input "buttonLabel12", "string", title: "Button 12 Label", defaultValue: "Button 12", displayDuringSetup: true, required: false	
-        input "buttonLabel13", "string", title: "Button 13 Label", defaultValue: "Button 13", displayDuringSetup: true, required: false	
-        input "buttonLabel14", "string", title: "Button 14 Label", defaultValue: "Button 14", displayDuringSetup: true, required: false	
-        input "buttonLabel15", "string", title: "Button 15 Label", defaultValue: "Button 15", displayDuringSetup: true, required: false
-  }	
 
-     
+  	    input "buttonLabel1",  "string", title: "Button 1 Label",  defaultValue: "Button 1",  displayDuringSetup: true, required: false
+        input "buttonLabel2",  "string", title: "Button 2 Label",  defaultValue: "Button 2",  displayDuringSetup: true, required: false
+        input "buttonLabel3",  "string", title: "Button 3 Label",  defaultValue: "Button 3",  displayDuringSetup: true, required: false
+        input "buttonLabel4",  "string", title: "Button 4 Label",  defaultValue: "Button 4",  displayDuringSetup: true, required: false
+        input "buttonLabel5",  "string", title: "Button 5 Label",  defaultValue: "Button 5",  displayDuringSetup: true, required: false
+		    input "buttonLabel6",  "string", title: "Button 6 Label",  defaultValue: "Button 6",  displayDuringSetup: true, required: false
+        input "buttonLabel7",  "string", title: "Button 7 Label",  defaultValue: "Button 7",  displayDuringSetup: true, required: false
+        input "buttonLabel8",  "string", title: "Button 8 Label",  defaultValue: "Button 8",  displayDuringSetup: true, required: false
+        input "buttonLabel9",  "string", title: "Button 9 Label",  defaultValue: "Button 9",  displayDuringSetup: true, required: false
+        input "buttonLabel10", "string", title: "Button 10 Label", defaultValue: "Button 10", displayDuringSetup: true, required: false
+		    input "buttonLabel11", "string", title: "Button 11 Label", defaultValue: "Button 11", displayDuringSetup: true, required: false
+        input "buttonLabel12", "string", title: "Button 12 Label", defaultValue: "Button 12", displayDuringSetup: true, required: false
+        input "buttonLabel13", "string", title: "Button 13 Label", defaultValue: "Button 13", displayDuringSetup: true, required: false
+        input "buttonLabel14", "string", title: "Button 14 Label", defaultValue: "Button 14", displayDuringSetup: true, required: false
+        input "buttonLabel15", "string", title: "Button 15 Label", defaultValue: "Button 15", displayDuringSetup: true, required: false
+  }
+
+
   tiles (scale: 2) {
-  
-  
+
+
     	valueTile("ok", "device.buttonNum", width: 2, height: 2) {
 			state("", label:'${currentValue}',
 				backgroundColor: "#79b821"
@@ -215,9 +216,9 @@ def zwaveEvent(hubitat.zwave.commands.wakeupv2.WakeUpNotification cmd) {
     def result = []
     result << createEvent(descriptionText: "${device.displayName} woke up", displayed: false)
 	if (!isDuplicateCall(state.lastWokeUp, 1)) {
-		state.lastwokeUp = new Date().time		
+		state.lastwokeUp = new Date().time
 	}
-    result << response(zwave.wakeUpV1.wakeUpNoMoreInformation().format()) 
+    result << response(zwave.wakeUpV1.wakeUpNoMoreInformation().format())
     return result
 }
 
@@ -232,14 +233,14 @@ private isDuplicateCall(lastRun, allowedEverySeconds) {
 
 def setButtonLabels() {
 
-    //Initialize button labels 
+    //Initialize button labels
     if (!state.buttonLabelsInitialized)
     {
        state.buttonLabelsInitialized=true
-       state.buttonLabels=["Button 1", "Button 2",  "Button 3",  "Button 4",  "Button 5",  "Button 6",  "Button 7", "Button 8", 
+       state.buttonLabels=["Button 1", "Button 2",  "Button 3",  "Button 4",  "Button 5",  "Button 6",  "Button 7", "Button 8",
                            "Button 9", "Button 10", "Button 11", "Button 12", "Button 13", "Button 14", "Button 15"]
     }
- 
+
     // set the button labels based on preferences
     if (buttonLabel1 != null) {
        state.buttonLabels[0]=limitTextLength(buttonLabel1)
@@ -312,18 +313,18 @@ def setButtonLabels() {
     sendEvent(name: "label13", value: state.buttonLabels[12], isStateChange: true)
     sendEvent(name: "label14", value: state.buttonLabels[13], isStateChange: true)
     sendEvent(name: "label15", value: state.buttonLabels[14], isStateChange: true)
-    
+
     sendEvent(name: "numberOfButtons", value: 15, displayed: false)
 }
 
 // Configure the device button types and corresponding scene numbers
 def configurationCmds() {
     def commands = []
- 
+
     if (logEnable) log.debug ("Entered configurationCmds")
-    
+
     // Loop through all the buttons on the controller
-    for (def buttonNum = 1; buttonNum <= 15; buttonNum++) {  
+    for (def buttonNum = 1; buttonNum <= 15; buttonNum++) {
        // set a unique corresponding scene for each button
        commands << zwave.sceneControllerConfV1.sceneControllerConfSet(groupId: buttonNum, sceneId: buttonNum).format()
        // set configuration for each button to zero (scene control momontary)
@@ -332,9 +333,9 @@ def configurationCmds() {
 
     commands << zwave.batteryV1.batteryGet().format()
 //    commands << associateHub()
-       
+
     setButtonLabels()
-    
+
     delayBetween(commands)
 }
 
@@ -342,13 +343,13 @@ def configurationCmds() {
 def configure() {
     def cmd=configurationCmds()
     //cmd << "delay 100"
-    
+
     // C&E T: set button texts on device
-    for (def buttonNum = 1; buttonNum <= 15; buttonNum++) {  
+    for (def buttonNum = 1; buttonNum <= 15; buttonNum++) {
         cmd << createCommandToSetButtonLabel(buttonNum-1, state.buttonLabels[buttonNum-1])
         cmd << "delay 1200" // using such a long delay seems to be the safest way to go
     }
-    
+
     if (logEnable) log.debug("Sending configuration: ${cmd}")
     return cmd
 }
@@ -375,7 +376,7 @@ def createCommandToSetButtonLabel(lineNumber, text) {
         //   "92" // COMMAND_CLASS_SCREEN_MD
         //   "02" // SCREEN_MD_REPORT
         //   "3B" // MoreData=0, Reserved=0, ScreenSettings=7 (3 bit, 7=keep current content), CharacterEncoding=1 (3 bit, ASCII+OEM)
-        //   "1"  // LineSettings=0 (3 bit, 0=selected font), Clear=1 (1 bit, 1=clear line) 
+        //   "1"  // LineSettings=0 (3 bit, 0=selected font), Clear=1 (1 bit, 1=clear line)
         //   "X"  // LineNumber (hex, 4 bit)
         //   "00" // CharacterPosition (hex 8 bit)
         //   "XX" // NumberOfCharacters (hex 8 bit)
@@ -383,7 +384,7 @@ def createCommandToSetButtonLabel(lineNumber, text) {
         //   "XX" // Character (hex ASCII)
         // NOTE: Theoretically you can send more than one line in one screenMdReport command.
         //   Hoever, the zwave documentation says that the size of the payload SHOULD NOT be bigger than 48 bytes.
-        //   That basically limits us to about 2 words at once. 
+        //   That basically limits us to about 2 words at once.
         //   So, it's easier to send one button label at a time.
 
         def screenReportHeader = "92"+"02"+"3B"
@@ -400,7 +401,7 @@ def createCommandToSetButtonLabel(lineNumber, text) {
         }
         command = screenReportHeader + lineSettings + lineNumberString + characterPositionString + numOfCharString + label
     }
-    
+
     return command
 }
 
