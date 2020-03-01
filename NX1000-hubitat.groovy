@@ -1,21 +1,15 @@
 /**
  *  Nexia NX1000 One Touch Controller
- *
+ *  IMPORT URL: https://raw.githubusercontent.com/WBEVAN/nx1000/master/NX1000-hubitat.groovy
  *
  *  This driver implements the NX1000 as a button controller.  It has been built on the great
- *  work of other.  I am humbled by their talent, and priviledged to use portions of thier work.
+ *  work of others.  Like Wayne Pirtle from which this is forked I am humbled by their talent,
+ *  and priviledged to use portions of thier work. This has been an great learing curve as this
+ *  is my first dive into writing a driver for the Hubitat
  *
- *  I did find out an intered=sting thing about the display capabilities of the NX1000.
- *  Things can get a bit freaky with regards to where labels wind up displayed on the device
- *  if the labels are too long.   With this in mind I have limited the label sent to the
- *  controller to 12 characters each.  It is nearly impossible to see 12 characters anyway,
- *  because the NX1000 does not appear to scroll long labels.
+ *  THANKS TO....
  *
- *  Thank you to Mike Maxwell for his example of Hubitat's button implentation.
- *  You will see his work used here to provide the button functionality.
- *
- *  Thank you to DarwinsDen for the code that puts the labels on the buttons.
- *  His work was built to make the NX1000 work on Smartthings. I have adapted it to work here.
+ *  Wayne Pirtle for getting the driver in a good starting shape and the cast before him.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  *  in compliance with the License. You may obtain a copy of the License at:
@@ -26,7 +20,14 @@
  *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
  *  for the specific language governing permissions and limitations under the License.
  *
+ *  WHATS NEW in 2.0
  *
+ *  - Added in 3 individual commands that now allow setting individual buttons on each panel
+ *  - Driver now supports selecting from 'Small' or 'Large' fonts and this can be done on an individual button
+ *  - Button Text preferences can now be used to indicate to use Large or small font, append :L for large or :S to the text
+ *  - Panel commands can be used directly from the likes of a rule to set update button text based off an action. (Only works if the device is awake)
+ *  - Label update for a button contains two passes. One to clear it (Passes spaces) and then another with the updated text
+ *  - Use more intuitve enumeration for the various commands
  *
  *  Changelog:
  *
@@ -47,12 +48,35 @@
         capability "PushableButton"
         capability "HoldableButton"
         capability "ReleasableButton"
+
+        capability "Battery"
+
+
         capability "Configuration"
 
-        command "push", ["NUMBER"]
-        command "hold", ["NUMBER"]
-        command "release", ["NUMBER"]
+        command "push", [ [name:"ButtonNumber",type: "ENUM", description: "Button", constraints: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]]
+        command "hold", [ [name:"ButtonNumber",type: "ENUM", description: "Button", constraints: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]]
+        command "release", [ [name:"ButtonNumber",type: "ENUM", description: "Button", constraints: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]]]
 
+
+       // Seperate Commands for each of the 3 panels
+        command "SetButtonTextPanel1", [
+            [name:"ButtonNumber", type: "ENUM", description: "Button", constraints: [1,2,3,4,5]],
+            [name:"TextType", type: "ENUM", description: "Text", constraints: ["Small","Large"]],
+            [name:"ButtonText", type: "STRING"]
+            ]
+
+        command "SetButtonTextPanel2", [
+            [name:"ButtonNumber", type: "ENUM", description: "Button", constraints: [6,7,8,9,10]],
+            [name:"TextType", type: "ENUM", description: "Text", constraints: ["Small","Large"]],
+            [name:"ButtonText", type: "STRING"]
+            ]
+
+        command "SetButtonTextPanel3", [
+            [name:"ButtonNumber", type: "ENUM", description: "Button", constraints: [11,12,13,14,15]],
+            [name:"TextType", type: "ENUM", description: "Text", constraints: ["Small","Large"]],
+            [name:"ButtonText", type: "STRING"]
+            ]
 
         fingerprint deviceId: "0x1801", inClusters: "0x5E, 0x85, 0x59, 0x80, 0x5B, 0x70, 0x5A, 0x7A, 0x72, 0x8F, 0x73, 0x2D, 0x93, 0x92, 0x86, 0x84"
   }
@@ -63,21 +87,25 @@
 
         input name: "logEnable", type: "bool", title: "Enable debug logging", defaultValue: true
 
-  	    input "buttonLabel1",  "string", title: "Button 1 Label",  defaultValue: "Button 1",  displayDuringSetup: true, required: false
-        input "buttonLabel2",  "string", title: "Button 2 Label",  defaultValue: "Button 2",  displayDuringSetup: true, required: false
-        input "buttonLabel3",  "string", title: "Button 3 Label",  defaultValue: "Button 3",  displayDuringSetup: true, required: false
-        input "buttonLabel4",  "string", title: "Button 4 Label",  defaultValue: "Button 4",  displayDuringSetup: true, required: false
-        input "buttonLabel5",  "string", title: "Button 5 Label",  defaultValue: "Button 5",  displayDuringSetup: true, required: false
-		    input "buttonLabel6",  "string", title: "Button 6 Label",  defaultValue: "Button 6",  displayDuringSetup: true, required: false
-        input "buttonLabel7",  "string", title: "Button 7 Label",  defaultValue: "Button 7",  displayDuringSetup: true, required: false
-        input "buttonLabel8",  "string", title: "Button 8 Label",  defaultValue: "Button 8",  displayDuringSetup: true, required: false
-        input "buttonLabel9",  "string", title: "Button 9 Label",  defaultValue: "Button 9",  displayDuringSetup: true, required: false
-        input "buttonLabel10", "string", title: "Button 10 Label", defaultValue: "Button 10", displayDuringSetup: true, required: false
-		    input "buttonLabel11", "string", title: "Button 11 Label", defaultValue: "Button 11", displayDuringSetup: true, required: false
-        input "buttonLabel12", "string", title: "Button 12 Label", defaultValue: "Button 12", displayDuringSetup: true, required: false
-        input "buttonLabel13", "string", title: "Button 13 Label", defaultValue: "Button 13", displayDuringSetup: true, required: false
-        input "buttonLabel14", "string", title: "Button 14 Label", defaultValue: "Button 14", displayDuringSetup: true, required: false
-        input "buttonLabel15", "string", title: "Button 15 Label", defaultValue: "Button 15", displayDuringSetup: true, required: false
+        // Button Text is used to indicate if ti is Small ':S' or 'or large :L', if manually entering these should be on the end of the button text
+  	    input "buttonLabel1",  "string", title: "Button 1 Label",  defaultValue: "Button 1:S",  displayDuringSetup: true, required: false
+        input "buttonLabel2",  "string", title: "Button 2 Label",  defaultValue: "Button 2:S",  displayDuringSetup: true, required: false
+        input "buttonLabel3",  "string", title: "Button 3 Label",  defaultValue: "Button 3:S",  displayDuringSetup: true, required: false
+        input "buttonLabel4",  "string", title: "Button 4 Label",  defaultValue: "Button 4:S",  displayDuringSetup: true, required: false
+        input "buttonLabel5",  "string", title: "Button 5 Label",  defaultValue: "Button 5:S",  displayDuringSetup: true, required: false
+		input "buttonLabel6",  "string", title: "Button 6 Label",  defaultValue: "Button 6:S",  displayDuringSetup: true, required: false
+        input "buttonLabel7",  "string", title: "Button 7 Label",  defaultValue: "Button 7:S",  displayDuringSetup: true, required: false
+        input "buttonLabel8",  "string", title: "Button 8 Label",  defaultValue: "Button 8:S",  displayDuringSetup: true, required: false
+        input "buttonLabel9",  "string", title: "Button 9 Label",  defaultValue: "Button 9:S",  displayDuringSetup: true, required: false
+        input "buttonLabel10", "string", title: "Button 10 Label", defaultValue: "Button 10:S", displayDuringSetup: true, required: false
+		input "buttonLabel11", "string", title: "Button 11 Label", defaultValue: "Button 11:S", displayDuringSetup: true, required: false
+        input "buttonLabel12", "string", title: "Button 12 Label", defaultValue: "Button 12:S", displayDuringSetup: true, required: false
+        input "buttonLabel13", "string", title: "Button 13 Label", defaultValue: "Button 13:S", displayDuringSetup: true, required: false
+        input "buttonLabel14", "string", title: "Button 14 Label", defaultValue: "Button 14:S", displayDuringSetup: true, required: false
+        input "buttonLabel15", "string", title: "Button 15 Label", defaultValue: "Button 15:S", displayDuringSetup: true, required: false
+
+
+
   }
 
 
@@ -105,11 +133,42 @@ def logsOff(){
 
 def parse(String description) {
     if (logEnable) log.debug "parse description: ${description}"
-    def cmd = zwave.parse(description,[ 0x26: 1])
+    //def cmd = zwave.parse(description,[ 0x26: 1])
+    // For debug dont care about the versions....
+    def cmd = zwave.parse(description)
+    if (logEnable) log.debug "CMD : ${cmd}"
+
     if (cmd) {zwaveEvent(cmd)}
     return
 }
 
+//Added these items
+def zwaveEvent(hubitat.zwave.commands.batteryv1.BatteryReport cmd) {
+    if (logEnable) log.debug "BatteryReport value: ${cmd}"
+}
+
+def zwaveEvent(hubitat.zwave.commands.switchbinaryv1.SwitchBinaryReport cmd) {
+    if (logEnable) log.debug "SwitchBinaryReport value: ${cmd}"
+
+
+}
+
+
+def SetButtonTextPanel1(btnNumber, String fontType, String text) {
+    if (logEnable) log.debug "SetButtonTextPanel1 Btn#: ${btnNumber}, Font: ${fontType} Btn Text: ${text}"
+    return configureOneButton(btnNumber.toInteger(), text, fontType)
+}
+
+def SetButtonTextPanel2(btnNumber, String fontType, String text) {
+    if (logEnable) log.debug "SetButtonTextPanel2 Btn#: ${btnNumber}, Font: ${fontType} Btn Text: ${text}"
+    return configureOneButton(btnNumber.toInteger(), text, fontType)
+}
+
+def SetButtonTextPanel3(btnNumber, String fontType, String text) {
+    if (logEnable) log.debug "SetButtonTextPanel3 Btn#: ${btnNumber}, Font: ${fontType} Btn Text: ${text}"
+    return configgureOneButton(btnNumber.toInteger(), text, fontType)
+}
+///-------
 
 //returns on physical
 def zwaveEvent(hubitat.zwave.commands.switchmultilevelv1.SwitchMultilevelReport cmd) {
@@ -127,14 +186,16 @@ def zwaveEvent(hubitat.zwave.commands.basicv1.BasicReport cmd) {
 def zwaveEvent(hubitat.zwave.commands.centralscenev1.CentralSceneNotification cmd){
     if (logEnable) log.debug "CentralSceneNotification: ${cmd}"
 
-    def button = cmd.sceneNumber
+      def button = cmd.sceneNumber
     def key = cmd.keyAttributes
     def action
     switch (key){
         case 0: //pushed
+            if (logEnable) log.debug "NEXIA: Key ${button} Text: ${state.buttonLabels[button-1]} - PUSHED"
             action = "pushed"
             break
         case 1:	//released, only after 2
+            if (logEnable) log.debug "NEXIA: Key ${button} Text: ${state.buttonLabels[button-1]} - RELEASED"
             state."${button}" = 0
             action = "released"
             break
@@ -142,15 +203,17 @@ def zwaveEvent(hubitat.zwave.commands.centralscenev1.CentralSceneNotification cm
             if (state."${button}" == 0){
                 state."${button}" = 1
                 runInMillis(200,delayHold,[data:button])
+                if (logEnable) log.debug "NEXIA: Key ${button} Text: ${state.buttonLabels[button-1]} - HOLDING"
             }
             break
         case 3:	//double tap, 4 is tripple tap
+            if (logEnable) log.debug "NEXIA: Key ${button} Text: ${state.buttonLabels[button-1]} - DOUBLE TAP"
             action = "doubleTapped"
             break
     }
 
     if (action){
-        def descriptionText = "${device.displayName} button ${button} was ${action}"
+        def descriptionText = "${device.displayName} button ${button} Text: ${state.buttonLabels[button-1]} was ${action}"
         if (txtEnable) log.info "${descriptionText}"
         sendEvent(name: "${action}", value: "${button}", descriptionText: descriptionText, isStateChange: true, type: "physical")
     }
@@ -162,34 +225,40 @@ def zwaveEvent(hubitat.zwave.Command cmd) {
     if (logEnable) log.debug "skip: ${cmd}"
 }
 
+
+
 def delayHold(button){
     def descriptionText = "${device.displayName} button ${button} was held"
     if (txtEnable) log.info "${descriptionText}"
     sendEvent(name: "held", value: "${button}", descriptionText: descriptionText, isStateChange: true, type: "physical")
 }
 
-def push(button){
+def push(String button){
     def descriptionText = "${device.displayName} button ${button} was pushed"
+    def intValue = button.toInteger()
     if (txtEnable) log.info "${descriptionText}"
-    sendEvent(name: "pushed", value: "${button}", descriptionText: descriptionText, isStateChange: true, type: "digital")
+    sendEvent(name: "pushed", value: "${intValue}", descriptionText: descriptionText, isStateChange: true, type: "digital")
 }
 
-def hold(button){
+def hold(String button){
     def descriptionText = "${device.displayName} button ${button} was held"
+    def intValue = button.toInteger()
     if (txtEnable) log.info "${descriptionText}"
-    sendEvent(name: "held", value: "${button}", descriptionText: descriptionText, isStateChange: true, type: "digital")
+    sendEvent(name: "held", value: "${intValue}", descriptionText: descriptionText, isStateChange: true, type: "digital")
 }
 
-def release(button){
+def release(String button){
     def descriptionText = "${device.displayName} button ${button} was released"
+    def intValue = button.toInteger()
     if (txtEnable) log.info "${descriptionText}"
-    sendEvent(name: "released", value: "${button}", descriptionText: descriptionText, isStateChange: true, type: "digital")
+    sendEvent(name: "released", value: "${intValue}", descriptionText: descriptionText, isStateChange: true, type: "digital")
 }
 
 def doubleTap(button){
     def descriptionText = "${device.displayName} button ${button} was doubleTapped"
     if (txtEnable) log.info "${descriptionText}"
-    sendEvent(name: "doubleTapped", value: "${button}", descriptionText: descriptionText, isStateChange: true, type: "digital")
+    def intValue = button.toInteger()
+    sendEvent(name: "doubleTapped", value: "${intValue}", descriptionText: descriptionText, isStateChange: true, type: "digital")
 }
 
 def installed(){
@@ -237,64 +306,64 @@ def setButtonLabels() {
     if (!state.buttonLabelsInitialized)
     {
        state.buttonLabelsInitialized=true
-       state.buttonLabels=["Button 1", "Button 2",  "Button 3",  "Button 4",  "Button 5",  "Button 6",  "Button 7", "Button 8",
-                           "Button 9", "Button 10", "Button 11", "Button 12", "Button 13", "Button 14", "Button 15"]
+       state.buttonLabels=["small btn 1:S", "Large 2:L",  "Button 3:S",  "Button 4:S",  "Button 5:S",  "Button 6:S",  "Button 7:S", "Button 8:S",
+                           "Button 9:S", "Button 10:S", "Button 11:S", "Button 12:S", "Button 13:S", "Button 14:S", "Button 15:S"]
     }
 
     // set the button labels based on preferences
     if (buttonLabel1 != null) {
-       state.buttonLabels[0]=limitTextLength(buttonLabel1)
+       state.buttonLabels[0]=buttonLabel1
     }
     if (buttonLabel2 != null) {
-       state.buttonLabels[1]=limitTextLength(buttonLabel2)
+       state.buttonLabels[1]=buttonLabel2
     }
     if (buttonLabel3 != null) {
-       state.buttonLabels[2]=limitTextLength(buttonLabel3)
+       state.buttonLabels[2]=buttonLabel3
     }
     if (buttonLabel4 != null) {
-       state.buttonLabels[3]=limitTextLength(buttonLabel4)
+       state.buttonLabels[3]=buttonLabel4
     }
     if (buttonLabel5 != null) {
-       state.buttonLabels[4]=limitTextLength(buttonLabel5)
+       state.buttonLabels[4]=buttonLabel5
     }
     if (buttonLabel6 != null) {
-       state.buttonLabels[5]=limitTextLength(buttonLabel6)
+       state.buttonLabels[5]=buttonLabel6
     }
     if (buttonLabel7 != null) {
-       state.buttonLabels[6]=limitTextLength(buttonLabel7)
+       state.buttonLabels[6]=buttonLabel7
     }
     if (buttonLabel8 != null) {
-       state.buttonLabels[7]=limitTextLength(buttonLabel8)
+       state.buttonLabels[7]=buttonLabel8
     }
     if (buttonLabel9 != null) {
-       state.buttonLabels[8]=limitTextLength(buttonLabel9)
+       state.buttonLabels[8]=buttonLabel9
     }
     if (buttonLabel7 != null) {
-       state.buttonLabels[6]=limitTextLength(buttonLabel7)
+       state.buttonLabels[6]=buttonLabel7
     }
     if (buttonLabel8 != null) {
-       state.buttonLabels[7]=limitTextLength(buttonLabel8)
+       state.buttonLabels[7]=buttonLabel8
     }
     if (buttonLabel9 != null) {
-       state.buttonLabels[8]=limitTextLength(buttonLabel9)
+       state.buttonLabels[8]=buttonLabel9
     }
     if (buttonLabel10 != null) {
-       state.buttonLabels[9]=limitTextLength(buttonLabel10)
+       state.buttonLabels[9]=buttonLabel10
     }
     if (buttonLabel11 != null) {
-       state.buttonLabels[10]=limitTextLength(buttonLabel11)
+       state.buttonLabels[10]=buttonLabel11
     }
     if (buttonLabel12 != null) {
-       state.buttonLabels[11]=limitTextLength(buttonLabel12)
+       state.buttonLabels[11]=buttonLabel12
     }
     if (buttonLabel13 != null) {
-       state.buttonLabels[12]=limitTextLength(buttonLabel13)
+       state.buttonLabels[12]=buttonLabel13
     }
     if (buttonLabel14 != null) {
-       state.buttonLabels[13]=limitTextLength(buttonLabel14)
+       state.buttonLabels[13]=buttonLabel14
     }
     if (buttonLabel15 != null) {
-       state.buttonLabels[14]=limitTextLength(buttonLabel15)
+       state.buttonLabels[14]=buttonLabel15
     }
 
     //send the button labels
@@ -317,6 +386,40 @@ def setButtonLabels() {
     sendEvent(name: "numberOfButtons", value: 15, displayed: false)
 }
 
+
+// Support to configure a single button, fontType is Small or Large
+def configureOneButton(Integer buttonNum, String buttonText, String fontType){
+  def commands = []
+
+    def intValue = buttonNum
+    if (logEnable) log.debug ("Entered congureOneButton")
+
+
+    // Clear the current text becuase well its nice to do
+    commands << createCommandToSetButtonLabel(intValue-1, "                  ",4)
+
+    commands << "delay 1000"
+    // Set font accordingly
+    if(fontType == "Small"){
+        state.buttonLabels[intValue-1]=limitTextLength(buttonText)+":S"
+        commands << createCommandToSetButtonLabel(intValue-1, limitTextLength(state.buttonLabels[intValue-1]),0)
+    }
+    else{
+        state.buttonLabels[intValue-1]=limitTextLength(buttonText)+":L"
+        commands << createCommandToSetButtonLabel(intValue-1, limitTextLength(state.buttonLabels[intValue-1]),4)
+    }
+    commands << zwave.batteryV1.batteryGet().format()
+
+    delayBetween(commands,1200)
+
+    // Update the preferences
+    device.updateSetting("buttonLabel${intValue}",[value: state.buttonLabels[intValue-1] , type:"string"])
+
+    setButtonLabels()
+
+    return commands
+}
+
 // Configure the device button types and corresponding scene numbers
 def configurationCmds() {
     def commands = []
@@ -328,6 +431,9 @@ def configurationCmds() {
        // set a unique corresponding scene for each button
        commands << zwave.sceneControllerConfV1.sceneControllerConfSet(groupId: buttonNum, sceneId: buttonNum).format()
        // set configuration for each button to zero (scene control momontary)
+       // 0 is moentary
+       // 2 is toggle - Cant seem to get this to work. No events generated.
+
        commands << zwave.configurationV1.configurationSet(configurationValue: [0], parameterNumber: buttonNum + 1, size: 1).format()
     }
 
@@ -337,6 +443,8 @@ def configurationCmds() {
     setButtonLabels()
 
     delayBetween(commands)
+
+    return commands
 }
 
 // Configure the device
@@ -346,7 +454,11 @@ def configure() {
 
     // C&E T: set button texts on device
     for (def buttonNum = 1; buttonNum <= 15; buttonNum++) {
-        cmd << createCommandToSetButtonLabel(buttonNum-1, state.buttonLabels[buttonNum-1])
+
+        if (logEnable) log.debug ("Font for button ${buttonNum}, Text = ${state.buttonLabels[buttonNum-1]} is ${getFont(state.buttonLabels[buttonNum-1])}")
+        cmd << createCommandToSetButtonLabel(buttonNum-1, "                  ",4)
+        cmd << "delay 1200" // using such a long delay seems to be the safest way to go
+        cmd << createCommandToSetButtonLabel(buttonNum-1, state.buttonLabels[buttonNum-1], getFont(state.buttonLabels[buttonNum-1]))
         cmd << "delay 1200" // using such a long delay seems to be the safest way to go
     }
 
@@ -358,8 +470,9 @@ def configure() {
 // Creates a Screen Meta Data Report command for one button label
 //   lineNumber = the number of the line 0..14
 //   text = the text to put on the button
-// Some default settings are applied (normal font, clear line, ASCII+OEM chars, charPos=0)
-def createCommandToSetButtonLabel(lineNumber, text) {
+// Some default settings are applied (clear line, ASCII+OEM chars, charPos=0)
+// Fint default to be large font
+def createCommandToSetButtonLabel(lineNumber, text, font = 4) {
 	def command = ""
 
     if (null == text) {
@@ -388,7 +501,9 @@ def createCommandToSetButtonLabel(lineNumber, text) {
         //   So, it's easier to send one button label at a time.
 
         def screenReportHeader = "92"+"02"+"3B"
-        def lineSettings = "1"
+
+
+        def lineSettings = "${font}"  // 0 is small text , 2 is inverse, 4 is Big Text
         def lineNumberString = Integer.toHexString(lineNumber)
         def characterPositionString = "00"
         text = limitTextLength(text)
@@ -421,8 +536,26 @@ private static String asciiToHex(String asciiValue)
 
 def limitTextLength(String text){
         // More than 12 characters on a line in this device isn't practicle. .
-        if (text.length() > 12) {
-            text = text.substring(0,12)
+
+        btnStr = text.split(':');
+        newText = btnStr[0]
+        if (newText.length() > 12) {
+            newText = newText.substring(0,12)
         }
-        return text
+        return newText
+}
+
+// 0 is small, 4 is large. Default is Large if :S or :L is not specified
+def getFont(String text)
+{
+   String[] str;
+   str = text.split(':')
+   if(str.length == 1)
+        return 4;
+
+   if(str[1] == 'L' )
+        return 4;
+   else
+       return 0;
+
 }
